@@ -1,0 +1,4 @@
+*
+!.gitignore
+!gulpfile.js
+!gulp.config.js
