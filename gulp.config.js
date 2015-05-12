@@ -11,7 +11,7 @@ module.exports = function() {
     var bowerFiles = wiredep({devDependencies: true})['js'];
     var bower = {
         json: require('./bower.json'),
-        directory: './vendor/',
+        directory: './vendors/',
         ignorePath: '../..'
     };
     var nodeModules = 'node_modules';
@@ -73,7 +73,7 @@ module.exports = function() {
         /**
          * browser sync
          */
-        browserReloadDelay: 1000,
+        browserReloadDelay: 500,
 
         /**
          * template cache
@@ -81,7 +81,7 @@ module.exports = function() {
         templateCache: {
             file: 'templates.js',
             options: {
-                module: 'searchApp',
+                module: 'app',
                 root: 'app/',
                 standAlone: false
             }

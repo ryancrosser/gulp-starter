@@ -1,16 +1,16 @@
-var args = require('yargs').argv;
+var args        = require('yargs').argv;
 var browserSync = require('browser-sync');
-var config = require('./gulp.config')();
-var del = require('del');
-var glob = require('glob');
-var gulp = require('gulp');
-var path = require('path');
-var _ = require('lodash');
-var $ = require('gulp-load-plugins')({lazy: true});
+var config      = require('./gulp.config')();
+var del         = require('del');
+var glob        = require('glob');
+var gulp        = require('gulp');
+var path        = require('path');
+var _           = require('lodash');
+var $           = require('gulp-load-plugins')({lazy: true});
 
 var colors = $.util.colors;
 var envenv = $.util.env;
-var port = process.env.PORT || config.defaultPort;
+var port   = process.env.PORT || config.defaultPort;
 
 /**
  * yargs variables can be passed in to alter the behavior, when present.
@@ -49,6 +49,16 @@ gulp.task('vet', function() {
         .pipe($.jscs());
 });
 
+gulp.task('csslint', function() {
+    log('Analyzing source with CSSLint');
+
+    return gulp
+        .src(config.css)
+        .pipe($.csslint())
+        .pipe($.csslint.reporter())
+        .pipe($.csslint.failReporter());
+});
+
 /**
  * Create a visualizer report
  */
@@ -73,11 +83,11 @@ gulp.task('less', ['clean-styles'], function() {
     return gulp
         .src(config.client + config.stylesheetsDir + '/**/*.less')
         .pipe($.rename(function(path) {
-            path.basename += '-less';
-        }))
+                  path.basename += '-less';
+              }))
         .pipe($.plumber()) // exit gracefully if something fails after this
         .pipe($.less())
-//        .on('error', errorLogger) // more verbose and dupe output. requires emit.
+        //        .on('error', errorLogger) // more verbose and dupe output. requires emit.
         .pipe($.autoprefixer({browsers: ['last 2 version', '> 5%']}))
         .pipe($.flatten())
         .pipe(gulp.dest(config.temp));
@@ -93,18 +103,18 @@ gulp.task('sass', ['clean-styles'], function() {
     return gulp
         .src(config.client + config.stylesheetsDir + '/**/*.scss')
         .pipe($.rename(function(path) {
-            path.basename += '-scss';
-        }))
+                  path.basename += '-scss';
+              }))
         .pipe($.plumber()) // exit gracefully if something fails after this
         .pipe($.sass())
-//        .on('error', errorLogger) // more verbose and dupe output. requires emit.
+        //        .on('error', errorLogger) // more verbose and dupe output. requires emit.
         .pipe($.autoprefixer({browsers: ['last 2 version', '> 5%']}))
         .pipe($.flatten())
         .pipe(gulp.dest(config.temp));
 });
 
 /**
- * Compile less to css
+ * Compile all css
  * @return {Stream}
  */
 gulp.task('styles', ['sass', 'less'], function() {
@@ -194,7 +204,7 @@ gulp.task('inject', ['styles', 'wiredep', 'templatecache'], function() {
  * --debug-brk or --debug
  * --nosync
  */
-gulp.task('serve-dev', ['styles', 'inject', 'less-watcher', 'sass-watcher'], function() {
+gulp.task('serve-dev', ['styles', 'inject'], function() {
     serve(true /*isDev*/);
 });
 
@@ -202,6 +212,11 @@ gulp.task('serve-dev', ['styles', 'inject', 'less-watcher', 'sass-watcher'], fun
  * Serve-dev alias
  */
 gulp.task('serve', ['serve-dev']);
+
+/**
+ * Run all watchers
+ */
+gulp.task('watchers', ['less-watcher', 'sass-watcher']);
 
 /**
  * Wire-up the bower dependencies
@@ -236,9 +251,9 @@ gulp.task('build', ['optimize', 'images', 'fonts'], function() {
     log('Building everything');
 
     var msg = {
-        title:    'gulp build',
+        title: 'gulp build',
         subtitle: 'Deployed to the build folder',
-        message:  'Running `gulp serve-build`'
+        message: 'Running `gulp serve-build`'
     };
     del(config.temp);
     log(msg);
@@ -280,7 +295,7 @@ gulp.task('optimize', ['inject'], function() {
 
     var assets = $.useref.assets({searchPath: './'});
     // Filters are named for the gulp-useref path
-    var cssFilter = $.filter('**/*.css');
+    var cssFilter   = $.filter('**/*.css');
     var jsAppFilter = $.filter('**/' + config.optimized.app);
     var jslibFilter = $.filter('**/' + config.optimized.lib);
 
@@ -337,9 +352,9 @@ gulp.task('templatecache', ['clean-code'], function() {
         .pipe($.minifyHtml({empty: true}))
         .pipe($.if(args.verbose, $.bytediff.stop(bytediffFormatter)))
         .pipe($.angularTemplatecache(
-            config.templateCache.file,
-            config.templateCache.options
-        ))
+                  config.templateCache.file,
+                  config.templateCache.options
+              ))
         .pipe(gulp.dest(config.temp));
 });
 
@@ -363,10 +378,10 @@ gulp.task('autotest', function(done) {
 gulp.task('build-specs', ['templatecache'], function(done) {
     log('building the spec runner');
 
-    var wiredep = require('wiredep').stream;
+    var wiredep       = require('wiredep').stream;
     var templateCache = config.temp + config.templateCache.file;
-    var options = config.getWiredepDefaultOptions();
-    var specs = config.specs;
+    var options       = config.getWiredepDefaultOptions();
+    var specs         = config.specs;
 
     if(args.startServers) {
         specs = [].concat(specs, config.serverIntegrationSpecs);
@@ -417,8 +432,8 @@ gulp.task('test', ['vet', 'templatecache'], function(done) {
  * --version=1.2.3 will bump to a specific version and ignore other flags
  */
 gulp.task('bump', function() {
-    var msg = 'Bumping versions';
-    var type = args.type;
+    var msg     = 'Bumping versions';
+    var type    = args.type;
     var version = args.ver;
     var options = {};
     if(version) {
@@ -497,8 +512,8 @@ function orderSrc(src, order) {
  * @param  {Boolean} specRunner - server spec runner html
  */
 function serve(isDev, specRunner) {
-    var debug = args.debug || args.debugBrk;
-    var debugMode = args.debug ? '--debug' : args.debugBrk ? '--debug-brk' : '';
+    var debug       = args.debug || args.debugBrk;
+    var debugMode   = args.debug ? '--debug' : args.debugBrk ? '--debug-brk' : '';
     var nodeOptions = getNodeOptions(isDev);
 
     if(debug) {
@@ -512,34 +527,34 @@ function serve(isDev, specRunner) {
 
     return $.nodemon(nodeOptions)
         .on('restart', ['vet'], function(ev) {
-            log('*** nodemon restarted', 'success');
-            log('files changed:\n' + ev);
-            setTimeout(function() {
-                browserSync.notify('reloading now ...');
-                browserSync.reload({stream: false});
-            }, config.browserReloadDelay);
-        })
+                log('*** nodemon restarted', 'success');
+                log('files changed:\n' + ev);
+                setTimeout(function() {
+                    browserSync.notify('reloading now ...');
+                    browserSync.reload({stream: false});
+                }, config.browserReloadDelay);
+            })
         .on('start', function() {
-            log('*** nodemon started');
-            startBrowserSync(isDev, specRunner);
-        })
+                log('*** nodemon started');
+                startBrowserSync(isDev, specRunner);
+            })
         .on('crash', function() {
-            log('*** nodemon crashed: script crashed for some reason', 'error');
-        })
+                log('*** nodemon crashed: script crashed for some reason', 'error');
+            })
         .on('exit', function() {
-            log('*** nodemon exited cleanly', 'success');
-        });
+                log('*** nodemon exited cleanly', 'success');
+            });
 }
 
 function getNodeOptions(isDev) {
     return {
-        script:    config.nodeServer,
+        script: config.nodeServer,
         delayTime: 1,
-        env:       {
-            'PORT':     port,
+        env: {
+            'PORT': port,
             'NODE_ENV': isDev ? 'dev' : 'build'
         },
-        watch:     [config.server]
+        watch: [config.server]
     };
 }
 
@@ -564,33 +579,34 @@ function startBrowserSync(isDev, specRunner) {
     // If build: watches the files, builds, and restarts browser-sync.
     // If dev: watches less, compiles it to css, browser-sync handles reload
     if(isDev) {
-        gulp.watch([config.less], ['styles'])
+        gulp.watch([config.less, config.sass], ['styles'])
             .on('change', changeEvent);
     } else {
-        gulp.watch([config.less, config.js, config.html], ['optimize', browserSync.reload])
+        gulp.watch([config.less, config.sass, config.js, config.html],
+            ['optimize', browserSync.reload])
             .on('change', changeEvent);
     }
 
     var options = {
-        proxy:          'localhost:' + port,
-        port:           3000,
-        files:          isDev ? [
+        proxy: 'localhost:' + port,
+        port: 3000,
+        files: isDev ? [
             config.client + '**/*.*',
             '!' + config.less,
             config.temp + '**/*.css'
         ] : [],
-        ghostMode:      { // these are the defaults t,f,t,t
-            clicks:   true,
+        ghostMode: { // these are the defaults t,f,t,t
+            clicks: true,
             location: false,
-            forms:    true,
-            scroll:   true
+            forms: true,
+            scroll: true
         },
-        injectChanges:  true,
+        injectChanges: true,
         logFileChanges: true,
-        logLevel:       'debug',
-        logPrefix:      'gulp-patterns',
-        notify:         true,
-        reloadDelay:    0 //1000
+        logLevel: 'debug',
+        logPrefix: 'gulp-patterns',
+        notify: true,
+        reloadDelay: 0 //1000
     };
     if(specRunner) {
         options.startPath = config.specRunnerFile;
@@ -605,12 +621,12 @@ function startBrowserSync(isDev, specRunner) {
 function startPlatoVisualizer(done) {
     log('Running Plato');
 
-    var files = glob.sync(config.plato.js);
+    var files        = glob.sync(config.plato.js);
     var excludeFiles = /.*\.spec\.js/;
-    var plato = require('plato');
+    var plato        = require('plato');
 
-    var options = {
-        title:   'Plato Inspections Report',
+    var options   = {
+        title: 'Plato Inspections Report',
         exclude: excludeFiles
     };
     var outputDir = config.report + '/plato';
@@ -637,16 +653,16 @@ function startPlatoVisualizer(done) {
 function startTests(singleRun, done) {
     var child;
     var excludeFiles = [];
-    var fork = require('child_process').fork;
-    var karma = require('karma').server;
-    var serverSpecs = config.serverIntegrationSpecs;
+    var fork         = require('child_process').fork;
+    var karma        = require('karma').server;
+    var serverSpecs  = config.serverIntegrationSpecs;
 
     if(args.startServers) {
         log('Starting servers');
-        var savedEnv = process.env;
+        var savedEnv      = process.env;
         savedEnv.NODE_ENV = 'dev';
-        savedEnv.PORT = 8888;
-        child = fork(config.nodeServer);
+        savedEnv.PORT     = 8888;
+        child             = fork(config.nodeServer);
     } else {
         if(serverSpecs && serverSpecs.length) {
             excludeFiles = serverSpecs;
@@ -655,8 +671,8 @@ function startTests(singleRun, done) {
 
     karma.start({
         configFile: __dirname + '/karma.conf.js',
-        exclude:    excludeFiles,
-        singleRun:  !!singleRun
+        exclude: excludeFiles,
+        singleRun: !!singleRun
     }, karmaCompleted);
 
     ////////////////
@@ -683,9 +699,9 @@ function startTests(singleRun, done) {
 function bytediffFormatter(data) {
     var difference = (data.savings > 0) ? ' smaller.' : ' larger.';
     return data.fileName + ' went from ' +
-        (data.startSize / 1000).toFixed(2) + ' kB to ' +
-        (data.endSize / 1000).toFixed(2) + ' kB and is ' +
-        formatPercent(1 - data.percent, 2) + '%' + difference;
+           (data.startSize / 1000).toFixed(2) + ' kB to ' +
+           (data.endSize / 1000).toFixed(2) + ' kB and is ' +
+           formatPercent(1 - data.percent, 2) + '%' + difference;
 }
 
 /**
@@ -713,7 +729,7 @@ function formatPercent(num, precision) {
  * @return {String}           Formatted file header
  */
 function getHeader() {
-    var pkg = require('./package.json');
+    var pkg      = require('./package.json');
     var template = ['/**',
                     ' * <%= pkg.name %> - <%= pkg.description %>',
                     ' * @authors <%= pkg.authors %>',
@@ -735,7 +751,7 @@ function getHeader() {
 function log(msg, type) {
     var color;
 
-    switch(type){
+    switch(type) {
         case 'error':
             color = 'red';
             break;
@@ -762,11 +778,11 @@ function log(msg, type) {
  * Show OS level notification using node-notifier
  */
 function notify(options) {
-    var notifier = require('node-notifier');
+    var notifier      = require('node-notifier');
     var notifyOptions = {
-        sound:        'Bottle',
+        sound: 'Bottle',
         contentImage: path.join(__dirname, 'gulp.png'),
-        icon:         path.join(__dirname, 'gulp.png')
+        icon: path.join(__dirname, 'gulp.png')
     };
     _.assign(notifyOptions, options);
     notifier.notify(notifyOptions);
